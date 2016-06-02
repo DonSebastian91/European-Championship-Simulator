@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
+# http://www.businessinsider.de/mathematiker-berechnen-ausgang-der-europameisterschaft-dieses-team-holt-angeblich-den-pokal-2016-5
 
-runtimes = 10
+runtimes = 1000
 dict_winner = {'Germany': 0,
              'Spain': 0,
              'France': 0,
@@ -67,7 +69,95 @@ team_strenght = {key: teams_elo[key] - elo_average for key in teams_elo.keys()}
 # Strenght Multiplicator
 team_strenght_goals = {key: team_strenght[key] * 0.0045 for key in team_strenght.keys()}
 
-for i in range(runtimes):
+def calculate_game(player_1, player_2, df_group):
+    goal_difference = team_strenght_goals[player_1] - team_strenght_goals[player_2]
+    player_2_goals = (average_goals - goal_difference)/2
+    player_1_goals = average_goals - player_2_goals
+
+    # Dice
+    player_1_goals *= 6
+    player_2_goals *= 6
+
+    # Game Time
+    player_1_win = 0
+    player_2_win = 0
+    for i in range(2):
+        goals_player_1 = 0
+        goals_player_2 = 0
+        for i in range(int(player_1_goals)):
+            dice = np.random.randint(1, 6 + 1)
+            if dice == 6:
+                goals_player_1 += 1
+
+        for i in range(int(player_2_goals)):
+            dice = np.random.randint(1, 6 + 1)
+            if dice == 6:
+                goals_player_2 += 1
+
+        df_group.loc[player_1]['Goals'] += goals_player_1
+        df_group.loc[player_1]['Clean Sheet'] += goals_player_2
+        df_group.loc[player_2]['Goals'] += goals_player_2
+        df_group.loc[player_2]['Clean Sheet'] += goals_player_1
+
+        if goals_player_1 >= goals_player_2:
+            player_1_win += 1
+
+        if goals_player_1 <= goals_player_2:
+            player_2_win += 1
+
+    if player_1_win > player_2_win:
+        df_group.loc[player_1]['Points'] += 3
+        return player_1
+
+    if player_1_win < player_2_win:
+        df_group.loc[player_2]['Points'] += 3
+        return player_2
+
+    if player_1_win == player_2_win:
+        return player_2
+
+# New Function -> No Data Frames
+def calculate_game_2(player_1, player_2):
+    goal_difference = team_strenght_goals[player_1] - team_strenght_goals[player_2]
+    player_2_goals = (average_goals - goal_difference)/2
+    player_1_goals = average_goals - player_2_goals
+
+    # Dice
+    player_1_goals *= 6
+    player_2_goals *= 6
+
+    # Game Time
+    player_1_win = 0
+    player_2_win = 0
+    for i in range(2):
+        goals_player_1 = 0
+        goals_player_2 = 0
+        for i in range(int(player_1_goals)):
+            dice = np.random.randint(1, 6 + 1)
+            if dice == 6:
+                goals_player_1 += 1
+
+        for i in range(int(player_2_goals)):
+            dice = np.random.randint(1, 6 + 1)
+            if dice == 6:
+                goals_player_2 += 1
+
+        if goals_player_1 >= goals_player_2:
+            player_1_win += 1
+
+        if goals_player_1 <= goals_player_2:
+            player_2_win += 1
+
+    if player_1_win > player_2_win:
+        return player_1
+
+    if player_1_win < player_2_win:
+        return player_2
+
+    if player_1_win == player_2_win:
+        return player_2
+
+for i in tqdm(range(runtimes)):
     # Groups
     group_a = ['Albania', 'France', 'Romania', 'Switzerland']
     group_b = ['England', 'Russia', 'Slovakia', 'Wales']
@@ -109,53 +199,6 @@ for i in range(runtimes):
 
     # Necessary
     df_groups = [df_group_a, df_group_b, df_group_c, df_group_d, df_group_e, df_group_f]
-
-    def calculate_game(player_1, player_2, df_group):
-        goal_difference = team_strenght_goals[player_1] - team_strenght_goals[player_2]
-        player_2_goals = (average_goals - goal_difference)/2
-        player_1_goals = average_goals - player_2_goals
-
-        # Dice
-        player_1_dice = player_1_goals * 6
-        player_2_dice = player_2_goals * 6
-
-        # Game Time
-        player_1_win = 0
-        player_2_win = 0
-        for i in range(3):
-            goals_player_1 = 0
-            goals_player_2 = 0
-            for i in range(int(player_1_dice)):
-                dice = np.random.randint(1, 6 + 1)
-                if dice == 6:
-                    goals_player_1 += 1
-
-            for i in range(int(player_2_dice)):
-                dice = np.random.randint(1, 6 + 1)
-                if dice == 6:
-                    goals_player_2 += 1
-
-            df_group.loc[player_1]['Goals'] += goals_player_1
-            df_group.loc[player_1]['Clean Sheet'] += goals_player_2
-            df_group.loc[player_2]['Goals'] += goals_player_2
-            df_group.loc[player_2]['Clean Sheet'] += goals_player_1
-
-            if goals_player_1 >= goals_player_2:
-                player_1_win += 1
-
-            if goals_player_1 <= goals_player_2:
-                player_2_win += 1
-
-        if player_1_win > player_2_win:
-            df_group.loc[player_1]['Points'] += 3
-            return player_1
-
-        if player_1_win < player_2_win:
-            df_group.loc[player_2]['Points'] += 3
-            return player_2
-
-        if player_1_win == player_2_win:
-            return player_2
 
     # Group Phase
     def group_phase(group, df_group):
@@ -204,47 +247,6 @@ for i in range(runtimes):
     df_achtel_8['Country'][0] = df_group_a.iloc[3].name
     df_achtel_8['Country'][1] = df_group_c.iloc[2].name
 
-    # New Function -> No Data Frames
-    def calculate_game_2(player_1, player_2):
-        goal_difference = team_strenght_goals[player_1] - team_strenght_goals[player_2]
-        player_2_goals = (average_goals - goal_difference)/2
-        player_1_goals = average_goals - player_2_goals
-
-        # Dice
-        player_1_dice = player_1_goals * 6
-        player_2_dice = player_2_goals * 6
-
-        # Game Time
-        player_1_win = 0
-        player_2_win = 0
-        for i in range(3):
-            goals_player_1 = 0
-            goals_player_2 = 0
-            for i in range(int(player_1_dice)):
-                dice = np.random.randint(1, 6 + 1)
-                if dice == 6:
-                    goals_player_1 += 1
-
-            for i in range(int(player_2_dice)):
-                dice = np.random.randint(1, 6 + 1)
-                if dice == 6:
-                    goals_player_2 += 1
-
-            if goals_player_1 >= goals_player_2:
-                player_1_win += 1
-
-            if goals_player_1 <= goals_player_2:
-                player_2_win += 1
-
-        if player_1_win > player_2_win:
-            return player_1
-
-        if player_1_win < player_2_win:
-            return player_2
-
-        if player_1_win == player_2_win:
-            return player_2
-
     # Round of Last 8
     achtel_1 = calculate_game_2(df_group_a.iloc[2].name, df_group_c.iloc[2].name)
     achtel_2 = calculate_game_2(df_group_b.iloc[3].name, df_group_a.iloc[1].name)
@@ -267,7 +269,7 @@ for i in range(runtimes):
 
     # Final
     final = calculate_game_2(halb_1, halb_2)
-    df_winner[final] += 1
+    dict_winner[final] += 1
     
-for team in df_winner:
+for team in dict_winner:
     print('Probability for ' + team + ' : ' + str(((dict_winner[team]/sum(dict_winner.values())))*100) + '.')
