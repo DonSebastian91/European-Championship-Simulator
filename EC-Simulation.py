@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 runtimes = 10
-df_winner = {'Germany': 0,
+dict_winner = {'Germany': 0,
              'Spain': 0,
              'France': 0,
              'England': 0,
@@ -270,4 +270,4 @@ for i in range(runtimes):
     df_winner[final] += 1
     
 for team in df_winner:
-    print('Probability for ' + team + ' : ' + str(((df_winner[team]/runtimes))*100) + '.')
+    print('Probability for ' + team + ' : ' + str(((dict_winner[team]/sum(dict_winner.values())))*100) + '.')
