@@ -271,4 +271,4 @@ for i in range(runtimes):
     df_winner[final] += 1
     
 for team in df_winner:
-    print('Probability for ' + team + ' : ' + str(((df_winner[team]/durchlaeufe))*100) + '.')
+    print('Probability for ' + team + ' : ' + str(((df_winner[team]/runtimes))*100) + '.')
