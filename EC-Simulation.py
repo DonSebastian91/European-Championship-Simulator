@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-# http://www.businessinsider.de/mathematiker-berechnen-ausgang-der-europameisterschaft-dieses-team-holt-angeblich-den-pokal-2016-5
 
 runtimes = 10
 df_winner = {'Germany': 0,
